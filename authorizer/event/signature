@@ -1,0 +1,15 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+{
+    "Slug": "test",
+    "Target": "https://example.com",
+    "Tracking":"False"
+}
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARMIAB0WIQSrHzOiU8XGVUeuG0uN6nEih6bSfQUCY+lFtAAKCRCN6nEih6bS
+ffSaAP9q9/mVqv4OkRSERYl3pKw6wgf7uI3ZaTCx7ograKMPJQEAow7aVK30ajzI
+RwBhcpgPWE2jc7zPkEPPwA29lJtCE7E=
+=osbO
+-----END PGP SIGNATURE-----
