@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  A url shortner with an authorizer to allow put requests from a trusted gnupg-key.
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - Dev
+      - Prd
+    Default: Dev
+  Arch:
+    Type: String
+    AllowedValues:
+      - arm64
+      - x86_64
+    Default: arm64
+  PowerToolsVersion:
+    Type: String
+    Default: 21
+  PublicKeyURL:
+    Type: String
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, Dev]
+  IsArm: !Equals [!Ref Arch, arm64]
+
+Globals:
+  HttpApi:
+    CorsConfiguration:
+      AllowOrigins:
+        - !If [IsDev, "*", "https://scribbd.link"]
+      AllowHeaders:
+        - Content-Type
+        - Authorization
+        - X-Amz-Date
+      MaxAge: 300
+  Function:
+    Timeout: 5
+    MemorySize: 256
+    Architectures:
+      - !Ref Arch
+    Runtime: python3.9
+    Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
+    # Embed Lambda Powertools as a shared Layer
+    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/#lambda-layer
+    Layers: #
+      - !If
+        - IsArm
+        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
+        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
+    Environment:
+      Variables:
+        # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+        LOG_LEVEL: INFO
+        POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+        POWERTOOLS_LOGGER_LOG_EVENT: true
+        POWERTOOLS_METRICS_NAMESPACE: ScribbdUrlShortner
+        POWERTOOLS_SERVICE_NAME: Shortner
+
+Resources:
+  AuthLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: GnuGP-Layer
+      Description: A layer for the gnupg authorizer
+      CompatibleRuntimes:
+        - python3.9
+      CompatibleArchitectures:
+        - arm64
+        - x86_64
+      ContentUri: authorizer/layer
+    Metadata:
+      BuildMethod: python3.9
+
+  GnuPGLambeAuthorizer:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: gnupg.lambda_handler
+      CodeUri: authorizer/src/
+      Description: GnuPG authorizer
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: Authorizer
+          PUBLIC_KEY_URL: !Ref PublicKeyURL
+      Layers:
+        - !Ref AuthLayer
+      Tags:
+        LambdaPowertools: python
+
+  HttpAPI:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        DefaultAuthorizer: GnuPGLambeAuthorizer
+        Authorizers:
+          GnuPGLambeAuthorizer:
+            AuthorizerPayloadFormatVersion: "2.0"
+            FunctionArn: !GetAtt GnuPGLambeAuthorizer.Arn
+            Identity:
+              Headers:
+                - Authorization
