@@ -80,7 +80,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: authorizer.lambda_handler
-      CodeUri: authorizer/src/
+      CodeUri: authorizers/gnupg/authorizer
       Description: GnuPG authorizer
       Environment:
         Variables:
@@ -94,7 +94,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: validator.lambda_handler
-      CodeUri: authorizer/src/
+      CodeUri: authorizers/gnupg/validator/src
       Description: GnuPG validator
       Environment:
         Variables:
@@ -143,7 +143,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: writer.lambda_handler
-      CodeUri: shortener/src/
+      CodeUri: api-backend/shortener/src
       Description: The write/delete function
       Environment:
         Variables:
@@ -181,7 +181,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: reader.lambda_handler
-      CodeUri: expander/src/
+      CodeUri: api-backend/expander/src
       Description: The unprotected read function
       Environment:
         Variables:
