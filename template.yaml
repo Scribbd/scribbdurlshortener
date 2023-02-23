@@ -76,21 +76,6 @@ Globals:
       Project: URLShortener
 
 Resources:
-  AuthLayer:
-    Type: AWS::Serverless::LayerVersion
-    DeletionPolicy: Delete
-    Properties:
-      LayerName: GnuGP-Layer
-      Description: A layer for the gnupg authorizer
-      CompatibleRuntimes:
-        - python3.9
-      CompatibleArchitectures:
-        - arm64
-        - x86_64
-      ContentUri: authorizer/layer
-    Metadata:
-      BuildMethod: makefile
-
   GnuPGLambdaAuthorizer:
     Type: AWS::Serverless::Function
     Properties:
@@ -102,8 +87,6 @@ Resources:
           POWERTOOLS_SERVICE_NAME: Authorizer
           PUBLIC_KEY_URL: !Ref PublicKeyURL
           GRACE_PERIOD: !Ref AuthorizerGracePeriod
-      Layers:
-        - !Ref AuthLayer
       Tags:
         LambdaPowertools: python
 
@@ -142,6 +125,14 @@ Resources:
                 - Authorization
       Tags:
         Project: URLShortener
+
+  ValidatorResourcePol:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GnuPGLambdaAuthorizer
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShortenerAPI}/*"
 
   SlugTable:
     Type: AWS::Serverless::SimpleTable
@@ -210,14 +201,6 @@ Resources:
             Method: GET
             Auth:
               Authorizer: NONE
-
-  ValidatorResourcePol:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Ref GnuPGLambdaAuthorizer
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShortenerAPI}/*"
 
 Outputs:
   ApiEndpoint:
