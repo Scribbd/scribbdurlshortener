@@ -17,24 +17,24 @@ logger = Logger(log_uncaught_exceptions=True)
 tracer = Tracer()
 
 COLD_PREFIX: str = "WARMUP:"
-GRACE_PERIOD: int = os.getenv("GRACE_PERIOD")
+GRACE_PERIOD: int = int(os.getenv("GRACE_PERIOD"))
 PUBLIC_KEY_URL: str = os.getenv("PUBLIC_KEY_URL")
 
 logger.info(f"{COLD_PREFIX} Getting public keys from {PUBLIC_KEY_URL}")
 asc_file = requests.get(PUBLIC_KEY_URL)
 
-gpg: gnupg.GPG = gnupg.GPG(gnupghome="/tmp/", gpgbinary='/usr/bin/gpg')
+gpg: gnupg.GPG = gnupg.GPG(gnupghome="/tmp/", gpgbinary='./bin/gpg')
 import_results: gnupg.ImportResult = gpg.import_keys(asc_file.text)
 logger.info(f"{COLD_PREFIX} Imported keys count {import_results.count}")
 logger.info(f"{COLD_PREFIX} Imported key fingerprints: {import_results.fingerprints}")
-logger.debug(f"{COLD_PREFIX} GPG response objecstrt:", pickle.dumps(import_results))
+logger.debug(f"{COLD_PREFIX} GPG error response: {import_results.problem_reason}")
 
 ### MAIN HANDLER ###
 @event_source(data_class=APIGatewayAuthorizerEventV2)
 @tracer.capture_lambda_handler
 @logger.inject_lambda_context(log_event=True, correlation_id_path=correlation_paths.API_GATEWAY_HTTP)
 def lambda_handler(event: APIGatewayAuthorizerEventV2, context: LambdaContext) -> dict:
-    authorization_header: str = event.headers.get("Authorization")
+    authorization_header: str = event.headers.get("authorization")
     signature = base64.b64decode(authorization_header, validate=True)
     verified: gnupg.Verify = gpg.verify(signature)
     timestamp: int = int(verified.timestamp)
@@ -45,8 +45,8 @@ def lambda_handler(event: APIGatewayAuthorizerEventV2, context: LambdaContext) -
     
     time_since_signature: int = int(time.time()) - timestamp
     if 0 <= time_since_signature <= GRACE_PERIOD:
-        logger.info(f"Signature expired. {time.time()}, diff: {time_since_signature}")
-        return APIGatewayAuthorizerResponseV2(authorize=False).asdict()
-
-    logger.info(f"Authorization: {verified.valid}")
-    return APIGatewayAuthorizerResponseV2(authorize=verified.valid).asdict()
+        logger.info(f"Timestamp within grace period. Authorization: {verified.valid}")
+        return APIGatewayAuthorizerResponseV2(authorize=verified.valid).asdict()
+    
+    logger.info(f"Signature expired. {time.time()}, diff: {time_since_signature}")
+    return APIGatewayAuthorizerResponseV2(authorize=False).asdict()

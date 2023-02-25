@@ -56,15 +56,7 @@ Globals:
     MemorySize: 256
     Architectures:
       - !Ref Arch
-    Runtime: python3.9
     Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
-    # Embed Lambda Powertools as a shared Layer
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/#lambda-layer
-    Layers: #
-      - !If
-        - IsArm
-        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
-        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
     Environment:
       Variables:
         # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
@@ -79,9 +71,10 @@ Resources:
   GnuPGLambdaAuthorizer:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: authorizer.lambda_handler
-      CodeUri: authorizers/gnupg/authorizer
       Description: GnuPG authorizer
+      PackageType: Image
+      ImageConfig: 
+        Command: ["authorizer.lambda_handler"]
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: Authorizer
@@ -89,13 +82,22 @@ Resources:
           GRACE_PERIOD: !Ref AuthorizerGracePeriod
       Tags:
         LambdaPowertools: python
+    Metadata:
+      DockerContext: authorizers/gnupg/authorizer
+      Dockerfile: Dockerfile
 
   GnuPGLambdaValidator:
     Type: AWS::Serverless::Function
     Properties:
+      Runtime: python3.9
       Handler: validator.lambda_handler
       CodeUri: authorizers/gnupg/validator/src
       Description: GnuPG validator
+      Layers: #
+        - !If
+          - IsArm
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: Validator
@@ -142,9 +144,15 @@ Resources:
   ShortenerFunction:
     Type: AWS::Serverless::Function
     Properties:
+      Runtime: python3.9
       Handler: writer.lambda_handler
       CodeUri: api-backend/shortener/src
       Description: The write/delete function
+      Layers: #
+        - !If
+          - IsArm
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: Shortener
@@ -180,9 +188,15 @@ Resources:
   ExpanderFunction:
     Type: AWS::Serverless::Function
     Properties:
+      Runtime: python3.9
       Handler: reader.lambda_handler
       CodeUri: api-backend/expander/src
       Description: The unprotected read function
+      Layers: #
+        - !If
+          - IsArm
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
+          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: Expander
