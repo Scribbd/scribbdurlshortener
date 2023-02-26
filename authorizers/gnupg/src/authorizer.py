@@ -17,7 +17,7 @@ logger = Logger(log_uncaught_exceptions=True)
 tracer = Tracer()
 
 COLD_PREFIX: str = "WARMUP:"
-GRACE_PERIOD: int = int(os.getenv("GRACE_PERIOD"))
+GRACE_PERIOD: int = int(os.getenv("GRACE_PERIOD", "60"))
 PUBLIC_KEY_URL: str = os.getenv("PUBLIC_KEY_URL")
 
 logger.info(f"{COLD_PREFIX} Getting public keys from {PUBLIC_KEY_URL}")
