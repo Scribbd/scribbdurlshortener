@@ -41,11 +41,12 @@ def lambda_handler(event: APIGatewayAuthorizerEventV2, context: LambdaContext) -
     
     logger.info(f"Signing key fingerprint: {verified.fingerprint}")
     logger.info(f"Timestamp of signature: {timestamp}")
+    logger.info(f"Verified: {verified.valid}")
     logger.debug(f"Verfied object: {pickle.dumps(verified)}")
     
     time_since_signature: int = int(time.time()) - timestamp
     if 0 <= time_since_signature <= GRACE_PERIOD:
-        logger.info(f"Timestamp within grace period. Authorization: {verified.valid}")
+        logger.info(f"Timestamp within grace period: {time_since_signature}.")
         return APIGatewayAuthorizerResponseV2(authorize=verified.valid).asdict()
     
     logger.info(f"Signature expired. {time.time()}, diff: {time_since_signature}")
