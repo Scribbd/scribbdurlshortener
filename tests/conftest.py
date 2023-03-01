@@ -18,9 +18,13 @@ def lambda_context():
 
 @pytest.fixture()
 def apigw_auth_event():
-    """Generates API GW Event"""
-    with open("authorizer/event/request.json", "r", encoding="UTF-8") as fp:
+    """Generates API GW Authorization Event"""
+    with open("authorizers/gnupg/event/request.json", "r", encoding="UTF-8") as fp:
         return json.load(fp)
-        
 
 
+@pytest.fixture()
+def apigw_post_event():
+    """Generate API GW Post event"""
+    with open("apibackend/shortener/event/request.json", "r", encoding="UTF-8") as fp:
+        return json.load(fp)

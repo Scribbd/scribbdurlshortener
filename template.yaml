@@ -80,29 +80,13 @@ Resources:
           POWERTOOLS_SERVICE_NAME: Authorizer
           PUBLIC_KEY_URL: !Ref PublicKeyURL
           GRACE_PERIOD: !Ref AuthorizerGracePeriod
+          GPG_HOME: /tmp/
+          GPG_BIN: ./bin/gpg
       Tags:
         LambdaPowertools: python
     Metadata:
-      DockerContext: authorizers/gnupg/authorizer
+      DockerContext: authorizers/gnupg/
       Dockerfile: Dockerfile
-
-  GnuPGLambdaValidator:
-    Type: AWS::Serverless::Function
-    Properties:
-      Runtime: python3.9
-      Handler: validator.lambda_handler
-      CodeUri: authorizers/gnupg/validator/src
-      Description: GnuPG validator
-      Layers: #
-        - !If
-          - IsArm
-          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${PowerToolsVersion}
-          - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${PowerToolsVersion}
-      Environment:
-        Variables:
-          POWERTOOLS_SERVICE_NAME: Validator
-      Tags:
-        LambdaPowertools: python
 
   ShortenerAPI:
     Type: AWS::Serverless::HttpApi
@@ -128,7 +112,7 @@ Resources:
       Tags:
         Project: URLShortener
 
-  ValidatorResourcePol:
+  AuthorizerResourcePolicy:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref GnuPGLambdaAuthorizer
@@ -146,7 +130,7 @@ Resources:
     Properties:
       Runtime: python3.9
       Handler: writer.lambda_handler
-      CodeUri: api-backend/shortener/src
+      CodeUri: apibackend/shortener/src
       Description: The write/delete function
       Layers: #
         - !If
@@ -157,14 +141,11 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: Shortener
           SLUG_TABLE: !Ref SlugTable
-          VALIDATOR_FUNCTION_NAME: !Ref GnuPGLambdaValidator
       Tags:
         LambdaPowertools: python
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref SlugTable
-        - LambdaInvokePolicy:
-            FunctionName: !Ref GnuPGLambdaValidator
       Events:
         CreateSlug:
           Type: HttpApi
@@ -190,7 +171,7 @@ Resources:
     Properties:
       Runtime: python3.9
       Handler: reader.lambda_handler
-      CodeUri: api-backend/expander/src
+      CodeUri: apibackend/expander/src
       Description: The unprotected read function
       Layers: #
         - !If

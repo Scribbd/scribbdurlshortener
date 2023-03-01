@@ -16,14 +16,16 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 logger = Logger(log_uncaught_exceptions=True)
 tracer = Tracer()
 
-COLD_PREFIX: str = "WARMUP:"
-GRACE_PERIOD: int = int(os.getenv("GRACE_PERIOD", "60"))
+COLD_PREFIX: str    = "WARMUP:"
+GRACE_PERIOD: int   = int(os.getenv("GRACE_PERIOD", "60"))
+GPG_HOME: str       = os.getenv("GPG_HOME", "/tmp/")
+GPG_BIN: str        = os.getenv("GPG_BIN")
 PUBLIC_KEY_URL: str = os.getenv("PUBLIC_KEY_URL")
 
 logger.info(f"{COLD_PREFIX} Getting public keys from {PUBLIC_KEY_URL}")
 asc_file = requests.get(PUBLIC_KEY_URL)
 
-gpg: gnupg.GPG = gnupg.GPG(gnupghome="/tmp/", gpgbinary='./bin/gpg')
+gpg: gnupg.GPG = gnupg.GPG(gnupghome=GPG_HOME, gpgbinary=GPG_BIN)
 import_results: gnupg.ImportResult = gpg.import_keys(asc_file.text)
 logger.info(f"{COLD_PREFIX} Imported keys count {import_results.count}")
 logger.info(f"{COLD_PREFIX} Imported key fingerprints: {import_results.fingerprints}")

@@ -22,7 +22,7 @@ print(authorization_header)
 encoded_header = base64.b64encode(authorization_header.data)
 print(encoded_header)
 
-# response = requests.post(url=f"{ENDPOINT}/test",headers={"Authorization": encoded_header},json=test_payload)
+response = requests.post(url=f"{ENDPOINT}/test",headers={"Authorization": encoded_header},json=test_payload)
 
-# print(response.status_code, response.reason)
-# print(response.text)
+print(response.status_code, response.reason)
+print(response.text)

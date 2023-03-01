@@ -15,7 +15,7 @@ DYNAMODB_TABLE = os.getenv("SLUG_TABLE")
 logger = Logger(log_uncaught_exceptions=True)
 tracer = Tracer()
 app = APIGatewayHttpResolver()
-dynamodb = parameters.DynamoDBProvider(table_name=DYNAMODB_TABLE)
+dynamodb = parameters.DynamoDBProvider(table_name=DYNAMODB_TABLE, value_attr="target")
 
 @app.get("/<slug>")
 def get_method(slug: str) -> Response:
@@ -28,8 +28,8 @@ def get_method(slug: str) -> Response:
             status_code=HTTPStatus.NOT_FOUND.value,
             content_type=content_types.APPLICATION_JSON,
             body=json.dumps({
-                "code": 404,
-                "message": "Slug has no target."
+                "code": HTTPStatus.NOT_FOUND.value,
+                "message": "No redirect available."
             })
         )
     logger.info(f"Found: {target}")
