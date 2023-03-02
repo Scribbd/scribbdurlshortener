@@ -1,8 +1,11 @@
-.aws-sam/
-
+# Python ignores
 .pytest_cache/
 __pycache__/
 
+# Sam-cli ignores
+.aws-sam/
+build.toml
 samconfig.toml
 
+# Sensitive data protection
 post.py
