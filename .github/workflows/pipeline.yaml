@@ -23,6 +23,9 @@ env:
   PROD_ARTIFACTS_BUCKET: aws-sam-cli-managed-production-pi-artifactsbucket-w348l729nl06
   PROD_IMAGE_REPOSITORY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/aws-sam-cli-managed-production-pipeline-resources-imagerepository-xmjmxsswhlls
   PROD_REGION: eu-west-1
+  PUBLIC_KEY_URL: https://keybase.io/scribbd/pgp_keys.asc
+  AWS_REGION: eu-west-1
+
 
 permissions:
   id-token: write
@@ -37,8 +40,9 @@ jobs:
         with:
           python-version: '3.9'
       - run: |
-      pip install pytest
-      python3 pytest
+          pip install pipenv
+          pipenv sync --dev
+          pipenv run pytest
 
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
@@ -207,6 +211,7 @@ jobs:
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
+    needs: [deploy-testing]
     # needs: [integration-test]
     runs-on: ubuntu-latest
     # Configure GitHub Action Environment to have a manual approval step before deployment to production
