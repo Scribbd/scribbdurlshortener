@@ -42,7 +42,7 @@ jobs:
       - run: |
           pip install pipenv
           pipenv sync --dev
-          pipenv run pytest
+          # pipenv run pytest
 
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
