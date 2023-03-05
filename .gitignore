@@ -7,5 +7,5 @@ __pycache__/
 build.toml
 samconfig.toml
 
-# Sensitive data protection
-post.py
+# Privacy scripts
+docs/scripts/

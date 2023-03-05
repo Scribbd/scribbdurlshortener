@@ -104,6 +104,6 @@ def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext) -> dic
                 "code": HTTPStatus.BAD_REQUEST.value,
                 "message": "Bad Request"
             })
-        )#
+        )
     logger.info("Request is valid. Resolving event.")
     return app.resolve(event, context)

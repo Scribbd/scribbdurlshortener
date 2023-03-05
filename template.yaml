@@ -45,7 +45,7 @@ Globals:
   HttpApi:
     CorsConfiguration:
       AllowOrigins:
-        - !If [IsDev, "*", "https://scribbd.link"]
+        - !If [IsDev, "*", !Sub "https://${DomainName}"]
       AllowHeaders:
         - Content-Type
         - Authorization
@@ -92,9 +92,9 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       DisableExecuteApiEndpoint: !If [IsDev, False, True]
-      Domain:
+      Domain: 
         CertificateArn: !Ref CertificateARN
-        DomainName: !Ref DomainName
+        DomainName: !If [IsDev, !Sub "dev.${DomainName}" , !Ref DomainName]
         Route53:
           HostedZoneName: !Sub "${DomainName}."
           IpV6: True
@@ -199,5 +199,6 @@ Resources:
 
 Outputs:
   ApiEndpoint:
+    Condition: IsDev
     Description: "HTTP API endpoint URL"
     Value: !Sub "https://${ShortenerAPI}.execute-api.${AWS::Region}.amazonaws.com"

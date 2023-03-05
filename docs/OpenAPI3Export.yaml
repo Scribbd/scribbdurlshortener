@@ -1,0 +1,151 @@
+openapi: "3.0.1"
+info:
+  title: "scribbdurlshortener"
+  version: "1.0"
+servers:
+  - url: "https://{{URL}}/{basePath}"
+    variables:
+      basePath:
+        default: ""
+tags:
+  - name: "Project"
+    x-amazon-apigateway-tag-value: "URLShortener"
+  - name: "httpapi:createdBy"
+    x-amazon-apigateway-tag-value: "SAM"
+paths:
+  /{slug}:
+    get:
+      responses:
+        default:
+          description: "Default response for GET /{slug}"
+          $ref: '#/components/responses/GeneralError'
+        '308':
+          description: Redirecting
+          headers:
+            location:
+              description: Redirect URL
+              schema:
+                type: string
+        '404':
+          description: Redirect unavailable
+          $ref: '#/components/responses/GeneralError'
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:{{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{AWS::Region}}:{{AWS::AccountId}}:function:scribbdurlshortener-ExpanderFunction-0XXpJEcLX6ZT/invocations"
+        connectionType: "INTERNET"
+    put:
+      responses:
+        default:
+          description: "Default response for PUT /{slug}"
+          $ref: '#/components/responses/GeneralError'
+        '200':
+          description: OK
+      security:
+        - GnuPGLambeAuthorizer: []
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:{{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{AWS::Region}}:{{AWS::AccountId}}:function:scribbdurlshortener-ShortenerFunction-VdkryYcXH86L/invocations"
+        connectionType: "INTERNET"
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/Register'
+    post:
+      responses:
+        default:
+          description: "Default response for POST /{slug}"
+          $ref: '#/components/responses/GeneralError'
+        '200':
+          description: OK
+      security:
+        - GnuPGLambeAuthorizer: []
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:{{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{AWS::Region}}:{{AWS::AccountId}}:function:scribbdurlshortener-ShortenerFunction-VdkryYcXH86L/invocations"
+        connectionType: "INTERNET"
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/Register'
+    delete:
+      responses:
+        default:
+          description: "Default response for DELETE /{slug}"
+          $ref: '#/components/responses/GeneralError'
+        '200':
+          description: OK
+      security:
+        - GnuPGLambeAuthorizer: []
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:{{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{AWS::Region}}:{{AWS::AccountId}}:function:scribbdurlshortener-ShortenerFunction-VdkryYcXH86L/invocations"
+        connectionType: "INTERNET"
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/Register'
+    parameters:
+      - name: "slug"
+        in: "path"
+        description: "Generated path parameter for slug"
+        required: true
+        schema:
+          type: "string"
+components:
+  securitySchemes:
+    GnuPGLambeAuthorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authorizer:
+        identitySource: "$request.header.Authorization"
+        authorizerUri: "arn:aws:apigateway:{{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{AWS::Region}}:{{AWS::AccountId}}:function:scribbdurlshortener-GnuPGLambdaAuthorizer-jLPMGcciLQaa/invocations"
+        authorizerPayloadFormatVersion: "2.0"
+        authorizerResultTtlInSeconds: -42
+        type: "request"
+        enableSimpleResponses: true
+  schemas:
+    Register:
+      type: object
+      properties:
+        target:
+          type: string
+    GeneralError:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  responses:
+    GeneralError:
+      description: General Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneralError'
+x-amazon-apigateway-cors:
+  allowHeaders:
+    - "authorization"
+    - "content-type"
+    - "x-amz-date"
+  maxAge: 300
+  allowCredentials: false
+  allowOrigins:
+    - "{{URL}}"
+x-amazon-apigateway-importexport-version: "1.0"

@@ -19,7 +19,7 @@ tracer = Tracer()
 COLD_PREFIX: str    = "WARMUP:"
 GRACE_PERIOD: int   = int(os.getenv("GRACE_PERIOD", "60"))
 GPG_HOME: str       = os.getenv("GPG_HOME", "/tmp/")
-GPG_BIN: str        = os.getenv("GPG_BIN")
+GPG_BIN: str        = os.getenv("GPG_BIN", "gpg")
 PUBLIC_KEY_URL: str = os.getenv("PUBLIC_KEY_URL")
 
 logger.info(f"{COLD_PREFIX} Getting public keys from {PUBLIC_KEY_URL}")
