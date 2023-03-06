@@ -18,7 +18,7 @@ Parameters:
     AllowedValues:
       - arm64
       - x86_64
-    Default: arm64
+    Default: x86_64
   PowerToolsVersion:
     Description: Layer version of Lambda Powertools provided by AWS
     Type: String
