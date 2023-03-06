@@ -194,6 +194,8 @@ jobs:
           role-skip-session-tagging: true
 
       - name: Deploy to testing account
+        env:
+          CERTIFICATE_ARN: ${{ secrets.DEV_CERTIFICATE_ARN }}
         run: |
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --template packaged-testing.yaml \
@@ -253,8 +255,8 @@ jobs:
             --s3-bucket ${PROD_ARTIFACTS_BUCKET} \
             --image-repository ${PROD_IMAGE_REPOSITORY} \
             --no-fail-on-empty-changeset \
-            --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE}
-            --parameter-overrides Environment=Prd \
+            --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE} \
+            --parameter-overrides Environment="Prd" \
               PublicKeyURL=${{ env.PUBLIC_KEY_URL }} \
               DomainName=${{ env.DOMAIN_NAME }} \
               CertificateARN=${{ env.CERTIFICATE_ARN }}
