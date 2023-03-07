@@ -44,6 +44,7 @@ Parameters:
 Conditions:
   IsDev: !Equals [!Ref Environment, Dev]
   IsArm: !Equals [!Ref Arch, arm64]
+  HasSub: !Not [!Equals [!Ref SubDomain, ""]]
 
 Globals:
   HttpApi:
@@ -98,7 +99,10 @@ Resources:
       DisableExecuteApiEndpoint: !If [IsDev, False, True]
       Domain: 
         CertificateArn: !Ref CertificateARN
-        DomainName: !Sub "${SubDomain}.${DomainName}"
+        DomainName: !If
+          - HasSub
+          - !Sub "${SubDomain}.${DomainName}"
+          - !Ref DomainName
         Route53:
           HostedZoneName: !Sub "${DomainName}."
           IpV6: True
