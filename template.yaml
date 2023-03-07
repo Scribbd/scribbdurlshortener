@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Transform: AWS::Serverless-2016-10-31
+Transform: 
+  - AWS::LanguageExtensions
+  - AWS::Serverless-2016-10-31
 
 Description: >
   A url shortener with an authorizer to allow put requests from a trusted gnupg-key.
@@ -130,8 +132,8 @@ Resources:
 
   SlugTable:
     Type: AWS::Serverless::SimpleTable
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
+    UpdateReplacePolicy: !If [IsDev, Delete, Retain]
+    DeletionPolicy: !If [IsDev, Delete, Retain]
 
   ShortenerFunction:
     Type: AWS::Serverless::Function
