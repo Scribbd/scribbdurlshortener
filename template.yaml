@@ -94,7 +94,7 @@ Resources:
       DisableExecuteApiEndpoint: !If [IsDev, False, True]
       Domain: 
         CertificateArn: !Ref CertificateARN
-        DomainName: !If [IsDev, !Sub "dev.${DomainName}" , !Ref DomainName]
+        DomainName: !Ref DomainName
         Route53:
           HostedZoneName: !Sub "${DomainName}."
           IpV6: True

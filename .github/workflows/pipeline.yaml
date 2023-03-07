@@ -24,7 +24,6 @@ env:
   PROD_IMAGE_REPOSITORY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/aws-sam-cli-managed-production-pipeline-resources-imagerepository-xmjmxsswhlls
   PROD_REGION: eu-west-1
   PUBLIC_KEY_URL: https://keybase.io/scribbd/pgp_keys.asc
-  AWS_REGION: eu-west-1
   DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
   CERTIFICATE_ARN: ${{ secrets.CERTIFICATE_ARN }}
 
@@ -67,10 +66,10 @@ jobs:
 
       - name: Delete feature branch stack
         env:
-          FEATURE_BRANCH_NAME: ${{ github.event.ref }}
+          STACK_NAME: ${{ github.ref_name }}-scribbdurlshortener
         run: |
           sam delete \
-            --stack-name $(echo ${FEATURE_BRANCH_NAME##*/} | tr -cd '[a-zA-Z0-9-]') \
+            --stack-name ${STACK_NAME} \
             --region ${TESTING_REGION} \
             --no-prompts
 
@@ -101,15 +100,22 @@ jobs:
           role-skip-session-tagging: true
 
       - name: Deploy to feature stack in the testing account
+        env:
+          STACK_NAME: ${{ github.ref_name }}-scribbdurlshortener
+          CERTIFICATE_ARN: ${{ secrets.DEV_CERTIFICATE_ARN }}
+          DOMAIN_NAME: ${{ github.ref_name }}.${{ secrets.DOMAIN_NAME }}
         shell: bash
         run: |
-          sam deploy --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
+          sam deploy --stack-name ${STACK_NAME} \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --image-repository ${TESTING_IMAGE_REPOSITORY} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
+            --parameter-overrides PublicKeyURL=${{ env.PUBLIC_KEY_URL }} \
+              DomainName=${{ env.DOMAIN_NAME }} \
+              CertificateARN=${{ env.CERTIFICATE_ARN }}
 
   build-and-package:
     if: github.ref == 'refs/heads/main'
@@ -196,6 +202,7 @@ jobs:
       - name: Deploy to testing account
         env:
           CERTIFICATE_ARN: ${{ secrets.DEV_CERTIFICATE_ARN }}
+          DOMAIN_NAME: test.${{ secrets.DOMAIN_NAME }}
         run: |
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --template packaged-testing.yaml \
@@ -209,6 +216,32 @@ jobs:
               DomainName=${{ env.DOMAIN_NAME }} \
               CertificateARN=${{ env.CERTIFICATE_ARN }}
 
+  delete-testing:
+    if: github.ref == 'refs/heads/main'
+    needs: [deploy-testing]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: aws-actions/setup-sam@v2
+
+      - name: Assume the testing pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ env.TESTING_REGION }}
+          role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: testing-packaging
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Delete testing stack
+        run: |
+          sam delete \
+            --stack-name ${TESTING_STACK_NAME} \
+            --region ${TESTING_REGION} \
+            --no-prompts
 
   # integration-test:
   #   if: github.ref == 'refs/heads/main'
