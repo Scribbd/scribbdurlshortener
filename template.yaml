@@ -30,6 +30,10 @@ Parameters:
   DomainName:
     Description: R53 Domain with no trailing '.'
     Type: String
+  SubDomain:
+    Description: Subdomain to use, defaults to empty
+    Type: String
+    Default: ""
   CertificateARN:
     Description: ARN of certificate of Domain
     Type: String
@@ -94,7 +98,7 @@ Resources:
       DisableExecuteApiEndpoint: !If [IsDev, False, True]
       Domain: 
         CertificateArn: !Ref CertificateARN
-        DomainName: !Ref DomainName
+        DomainName: !Sub "${SubDomain}.${DomainName}"
         Route53:
           HostedZoneName: !Sub "${DomainName}."
           IpV6: True

@@ -103,7 +103,7 @@ jobs:
         env:
           STACK_NAME: ${{ github.ref_name }}-scribbdurlshortener
           CERTIFICATE_ARN: ${{ secrets.DEV_CERTIFICATE_ARN }}
-          DOMAIN_NAME: ${{ github.ref_name }}.${{ secrets.DOMAIN_NAME }}
+          SUB_DOMAIN: ${{ github.ref_name }}
         shell: bash
         run: |
           sam deploy --stack-name ${STACK_NAME} \
@@ -113,9 +113,10 @@ jobs:
             --image-repository ${TESTING_IMAGE_REPOSITORY} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
-            --parameter-overrides PublicKeyURL=${{ env.PUBLIC_KEY_URL }} \
-              DomainName=${{ env.DOMAIN_NAME }} \
-              CertificateARN=${{ env.CERTIFICATE_ARN }}
+            --parameter-overrides PublicKeyURL=${PUBLIC_KEY_URL} \
+              DomainName=${DOMAIN_NAME} \
+              SubDomain=${SUB_DOMAIN} \
+              CertificateARN=${CERTIFICATE_ARN}
 
   build-and-package:
     if: github.ref == 'refs/heads/main'
@@ -202,7 +203,8 @@ jobs:
       - name: Deploy to testing account
         env:
           CERTIFICATE_ARN: ${{ secrets.DEV_CERTIFICATE_ARN }}
-          DOMAIN_NAME: test.${{ secrets.DOMAIN_NAME }}
+          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+          SUB_DOMAIN: test
         run: |
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --template packaged-testing.yaml \
@@ -213,8 +215,9 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides PublicKeyURL=${{ env.PUBLIC_KEY_URL }} \
-              DomainName=${{ env.DOMAIN_NAME }} \
-              CertificateARN=${{ env.CERTIFICATE_ARN }}
+              DomainName=${DOMAIN_NAME} \
+              SubDomain=${SUB_DOMAIN} \
+              CertificateARN=${CERTIFICATE_ARN}
 
   delete-testing:
     if: github.ref == 'refs/heads/main'
